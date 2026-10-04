@@ -1,4 +1,4 @@
-document.querySelector('#speed').addEventListener('change',()=>{stopSpeech();document.querySelector('#voice-status').textContent='语速已调整，点击重听可试听。'});
-document.querySelector('#contrast').addEventListener('click',e=>{const enabled=document.documentElement.classList.toggle('high-contrast');e.currentTarget.setAttribute('aria-pressed',String(enabled));e.currentTarget.textContent=enabled?'标准对比度':'高对比度'});
+document.querySelector('#speed').addEventListener('change',()=>{stopSpeech();document.querySelector('#voice-status').textContent='语速已调整，点击重听可试听。';savePreferences()});
+document.querySelector('#contrast').addEventListener('click',e=>{const enabled=document.documentElement.classList.toggle('high-contrast');e.currentTarget.setAttribute('aria-pressed',String(enabled));e.currentTarget.textContent=enabled?'标准对比度':'高对比度';savePreferences()});
 document.querySelector('#focus').addEventListener('click',e=>{const enabled=document.body.classList.toggle('focused');e.currentTarget.setAttribute('aria-pressed',String(enabled));e.currentTarget.textContent=enabled?'退出专注':'专注体验'});
 document.querySelectorAll('a[href="#plan"]').forEach(a=>a.addEventListener('click',()=>{document.body.classList.remove('focused');document.querySelector('#focus').setAttribute('aria-pressed','false');document.querySelector('#focus').textContent='专注体验'}));

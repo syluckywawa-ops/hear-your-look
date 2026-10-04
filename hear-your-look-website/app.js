@@ -1,23 +1,257 @@
-const $=s=>document.querySelector(s);
-let phase=0,scenario='overflow',paused=false,stream=null,cameraPending=false;
-const history=[];
-function content(){
- if(phase===0)return ['准备好了就开始','我们先检查口红。','按下开始体验，听取取景提示。演示会模拟检查结果，带你走完一次修正流程。','开始体验','等待开始'];
- if(phase===1)return ['01 / 取景准备','把手机放稳，面向镜头。','让光线均匀照在脸上，嘴唇自然闭合。准备好后，按下“模拟检查”。','模拟检查','等待你确认取景'];
- if(phase===2&&scenario==='uncertain')return ['02 / 模拟检查','光线不足，暂时无法判断。','请移到正面均匀照明的位置，避免背光。本场景不会输出口红是否合格的结论。','重新准备取景','演示：拒绝判断'];
- if(phase===2&&scenario==='clear')return ['02 / 模拟检查','未见明显唇线外溢。','这是预设的“未见明显问题”结果。真实产品需要通过摄像头检测，并经过不同光照与肤色测试。','完成本次演示','演示：未见明显问题'];
- if(phase===2)return ['02 / 模拟检查','你的右侧嘴角，需要处理一处。','演示结果：你自己的右侧嘴角有少量口红超出唇线。下一步会给出一条修正提示。','听取修正提示','演示：发现一处外溢'];
- if(phase===3)return ['03 / 语音纠正','轻轻处理右侧嘴角的外溢。','以你自己的右侧为准。用干净棉签轻轻擦去唇线外多余口红；完成后放下工具，再按“模拟复查”。','已调整，模拟复查','一次只处理这一处'];
- if(phase===4)return ['04 / 模拟复查','这一次，外溢已改善。','预设复查结果：刚才提示的外溢已改善。这展示了纠正流程，不代表系统分析了摄像头画面。','完成本次演示','演示：复查完成'];
- return ['本次演示完成','你已完成这次口红检查。','真实产品的下一步，是验证这些指令是否清楚、用户是否能独立修正，以及视觉结果是否可靠。','再体验一次','流程完成'];
+'use strict';
+const $ = selector => document.querySelector(selector);
+let phase = 0, scenario = 'overflow', paused = false, stream = null;
+let selectedImage = null, photoURL = null, busy = false, result = null;
+let runVersion = 0, photoVersion = 0, cameraVersion = 0, speechVersion = 0;
+let cameraPending = false, capturing = false, countdownTimer = null;
+let withoutPhoto = false, previousResult = null;
+let startedAt = null, repeats = 0, exportURL = null;
+const history = [], events = [];
+
+function record(type) {
+  events.push({ type, elapsedSeconds: startedAt === null ? 0 : Math.round((performance.now() - startedAt) / 1000) });
 }
-let speechVersion=0;
-function stopSpeech(){speechVersion++;document.body.classList.remove('speaking');if('speechSynthesis'in window)speechSynthesis.cancel()}
-function speak(){stopSpeech();if(!$('#voice').checked||paused)return;if(!('speechSynthesis'in window)){ $('#voice-status').textContent='此浏览器不支持语音播报，请使用文字提示。';return; }const current=speechVersion,c=content(),u=new SpeechSynthesisUtterance(c[1]+' '+c[2]);u.lang='zh-CN';u.rate=Number($('#speed')?.value||.9);u.onstart=()=>{if(current!==speechVersion)return;document.body.classList.add('speaking');$('#voice-status').textContent='正在播报当前提示…'};u.onend=()=>{if(current!==speechVersion)return;document.body.classList.remove('speaking');$('#voice-status').textContent='播报结束，需要时可以重听。'};u.onerror=()=>{if(current!==speechVersion)return;document.body.classList.remove('speaking');$('#voice-status').textContent='语音未能播出，可重听或使用文字提示。'};speechSynthesis.speak(u);}
-function render(announce=false){const c=content();$('#step-label').textContent=c[0];$('#instruction-title').textContent=paused?'体验已暂停':c[1];$('#instruction-body').textContent=paused?'按“继续体验”回到当前步骤。摄像头可通过左侧按钮单独关闭。':c[2];$('#next').textContent=c[3];$('#next').disabled=paused;$('#result-label').textContent=paused?'已暂停':c[4];$('#pause').textContent=paused?'继续体验':'暂停体验';$('#pause').setAttribute('aria-pressed',String(paused));const stage=phase<=1?0:phase===2?1:phase===3?2:3;document.querySelectorAll('[data-stage]').forEach(el=>{el.removeAttribute('aria-current');if(Number(el.dataset.stage)===stage)el.setAttribute('aria-current','step')});$('#history').replaceChildren();(history.length?history:['等待体验开始。所有记录只保留在当前页面。']).forEach(t=>{const li=document.createElement('li');li.textContent=t;$('#history').append(li)});if(announce)speak();}
-function advance(){if(paused)return;if(phase===5)return reset(true);if(phase===2&&scenario==='uncertain'){phase=1;}else if(phase===2&&scenario==='clear'){phase=5;}else phase++;history.push(content()[1]);render(true)}
-function reset(announce=false){stopSpeech();phase=0;paused=false;history.length=0;render(announce)}
-$('#next').addEventListener('click',advance);$('#repeat').addEventListener('click',speak);$('#restart').addEventListener('click',()=>reset(true));$('#pause').addEventListener('click',()=>{paused=!paused;stopSpeech();render(!paused)});$('#voice').addEventListener('change',()=>{if($('#voice').checked)speak();else{stopSpeech();$('#voice-status').textContent='语音已关闭，文字提示仍可使用。'}});$('#large').addEventListener('click',()=>{const active=document.documentElement.classList.toggle('large');$('#large').setAttribute('aria-pressed',String(active));$('#large').textContent=active?'标准字号':'大字模式'});document.querySelectorAll('[name=scenario]').forEach(el=>el.addEventListener('change',()=>{scenario=el.value;reset(false)}));
-function closeCamera(){stream?.getTracks().forEach(t=>t.stop());stream=null;$('#video').srcObject=null;$('#video').style.display='none';$('#camera-empty').hidden=false;$('#camera-state').textContent='摄像头已关闭';$('#camera-button').textContent='开启摄像头预览';$('#camera-message').textContent='摄像头已关闭，可继续体验演示。'}
-$('#camera-button').addEventListener('click',async()=>{if(stream)return closeCamera();if(cameraPending)return;if(!navigator.mediaDevices?.getUserMedia){$('#camera-message').textContent='当前环境不支持摄像头预览，请使用演示。';return}cameraPending=true;$('#camera-button').disabled=true;$('#camera-message').textContent='等待你允许摄像头访问…';try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});$('#video').srcObject=stream;await $('#video').play();$('#video').style.display='block';$('#camera-empty').hidden=true;$('#camera-state').textContent='本地预览中';$('#camera-button').textContent='关闭摄像头';$('#camera-message').textContent='画面仅供本机预览；检查结果仍为预设演示。';}catch(e){closeCamera();$('#camera-message').textContent=e.name==='NotAllowedError'?'摄像头权限未开启，可继续使用演示。':'未能打开摄像头，请检查设备或继续使用演示。';}finally{cameraPending=false;$('#camera-button').disabled=false}});
-window.addEventListener('pagehide',()=>{stopSpeech();closeCamera()});render();
+function content() {
+  if (phase === 0) return ['准备开始', '先做一次口红检查。', '先固定手机并准备照片。这是演示原型：照片不会上传，口红判断仍来自预设场景。', '准备照片', '演示原型 · 未接入真实 AI'];
+  if (phase === 1 || phase === 4) return [phase === 1 ? '01 / 照片准备' : '04 / 重新准备', phase === 1 ? '准备一张照片。' : '调整后，再准备一张照片。', selectedImage ? '照片已准备好。可运行预设流程；结果不来自这张照片。' : '拍摄或上传照片后再继续。也可以明确选择下方的无照片演示。', phase === 1 ? '运行预设检查' : '运行预设复查', withoutPhoto ? '已选择无照片演示' : selectedImage ? '照片仅在本机 · 妆容结果为预设' : '等待照片或无照片演示选择'];
+  if (phase === 2) return ['02 / 预设结果', result.title, result.status === 'adjust' ? '下面可以听取一条调整指引。你也可以暂不调整，直接结束体验。' : result.guidance, result.status === 'uncertain' ? '重新准备照片' : result.status === 'clear' ? '完成本次演示' : '听取一步指引', '预设结果 · 没有识别照片'];
+  if (phase === 3) return ['03 / 一个动作', '先只处理右侧嘴角。', result.guidance, '已调整，准备复查', '以你自己的左右为准 · 可随时结束'];
+  if (phase === 5) return ['04 / 预设复查', result.title, result.guidance, result.status === 'clear' ? '完成本次演示' : '重新准备照片', '预设复查 · 不代表实际改善'];
+  return ['体验结束', '按你的节奏，完成这次体验。', '你可以导出本次流程记录，或重新开始。演示中的结论不能作为照片分析效果或准确率证明。', '再体验一次', '体验已结束 · 摄像头和照片已释放'];
+}
+function stopSpeech() {
+  speechVersion++;
+  document.body.classList.remove('speaking');
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+function speakText(text) {
+  stopSpeech();
+  if (paused) return;
+  if (!$('#voice').checked) { $('#voice-status').textContent = '自动语音已关闭，请使用文字或屏幕阅读器。'; return; }
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) { $('#voice-status').textContent = '浏览器不支持语音，请使用完整文字指引。'; return; }
+  const version = speechVersion, utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'zh-CN'; utterance.rate = Number($('#speed').value);
+  utterance.onstart = () => { if (version !== speechVersion) return; document.body.classList.add('speaking'); $('#voice-status').textContent = '正在朗读…'; };
+  utterance.onend = () => { if (version !== speechVersion) return; document.body.classList.remove('speaking'); $('#voice-status').textContent = '朗读结束，可以重听。'; };
+  utterance.onerror = () => { if (version !== speechVersion) return; document.body.classList.remove('speaking'); $('#voice-status').textContent = '语音未能播出，请使用文字或重听。'; };
+  try { window.speechSynthesis.speak(utterance); } catch { utterance.onerror(); }
+}
+function speak() { const c = content(); speakText('演示原型。' + c[1] + ' ' + c[2]); }
+function focusHeading() { $('#instruction-title').tabIndex = -1; $('#instruction-title').focus(); }
+function render(announce = false, focus = false) {
+  const c = content(), preparing = phase === 1 || phase === 4, canPrepare = [0, 1, 4].includes(phase);
+  $('#step-label').textContent = c[0];
+  $('#instruction-title').textContent = busy ? '正在运行预设流程…' : paused ? '体验已暂停。' : c[1];
+  $('#instruction-body').textContent = busy ? '这里模拟等待时间，没有识别照片中的妆容。' : paused ? '继续时回到当前步骤。摄像头已关闭，照片仍可保留供你继续准备。' : c[2];
+  $('#next').textContent = busy ? '预设流程运行中…' : c[3];
+  $('#next').disabled = busy || paused || capturing || (preparing && !selectedImage && !withoutPhoto);
+  $('#repeat').disabled = busy;
+  $('#pause').disabled = busy || phase === 6;
+  $('#pause').textContent = paused ? '继续体验' : '暂停体验';
+  $('#pause').setAttribute('aria-pressed', String(paused));
+  $('#result-label').textContent = busy ? '演示模式 · 处理中' : c[4];
+  $('#source-note').textContent = '口红结果来源：预设演示。' + (selectedImage ? '这张照片未进行妆容识别。' : withoutPhoto ? '本次未使用照片。' : '尚未分析照片。');
+  $('#live').setAttribute('aria-busy', String(busy));
+  $('#no-photo').hidden = !preparing || withoutPhoto || !!selectedImage || busy || paused;
+  $('#retake').hidden = ![2, 3, 5].includes(phase) || busy || paused || ([2, 5].includes(phase) && result?.status !== 'adjust' && result?.status !== 'clear');
+  $('#finish').hidden = phase === 0 || phase === 6;
+  $('#finish').textContent = [2, 3].includes(phase) ? '暂不调整，结束体验' : '结束本次体验';
+  const stage = phase <= 1 ? 0 : phase === 2 ? 1 : phase === 3 ? 2 : 3;
+  document.querySelectorAll('[data-stage]').forEach(el => { el.removeAttribute('aria-current'); if (+el.dataset.stage === stage) el.setAttribute('aria-current', 'step'); });
+  $('#result-disclosure').hidden = !(result && [2, 3, 5].includes(phase) && !busy);
+  $('#result-details').replaceChildren();
+  if (result) {
+    for (const [label, value] of [['可判断性', result.quality], ['唇线外溢', result.smudging]]) {
+      const div = document.createElement('div'), dt = document.createElement('dt'), dd = document.createElement('dd');
+      dt.textContent = label; dd.textContent = value; div.append(dt, dd); $('#result-details').append(div);
+    }
+    $('#result-evidence').textContent = result.evidence;
+  }
+  $('#history').replaceChildren();
+  (history.length ? history : ['等待开始。尚无本次流程记录。']).forEach(text => { const li = document.createElement('li'); li.textContent = text; $('#history').append(li); });
+  $('#export-session').disabled = events.length === 0;
+  $('#capture').disabled = !stream || capturing || paused || busy || !canPrepare;
+  $('#photo').disabled = busy || capturing || !canPrepare;
+  $('#remove-photo').disabled = busy || !canPrepare;
+  $('#camera-button').disabled = cameraPending || capturing || busy || paused || !canPrepare;
+  if (focus) focusHeading();
+  if (announce) speak();
+}
+function prepareAgain() {
+  previousResult = result;
+  result = null; phase = 4; withoutPhoto = false;
+  removePhoto(); closeCamera(); record('prepare_recheck'); history.push('重新准备照片；上次照片已释放。'); render(true, true);
+}
+function finish() {
+  runVersion++; photoVersion++; busy = false; paused = false;
+  closeCamera(); removePhoto(); phase = 6; result = null; withoutPhoto = false;
+  record('finished'); history.push('用户结束体验；摄像头和照片已释放。'); render(true, true);
+}
+async function advance() {
+  if (busy || paused || capturing) return;
+  if (phase === 6) return reset(true);
+  if (phase === 0) { startedAt = performance.now(); record('started'); phase = 1; history.push('准备照片。'); render(true, true); return; }
+  if (phase === 1 || phase === 4) {
+    if (!selectedImage && !withoutPhoto) return;
+    const recheck = phase === 4, version = ++runVersion;
+    busy = true; stopSpeech(); record(recheck ? 'demo_recheck_requested' : 'demo_check_requested'); render();
+    try {
+      const response = validateMakeupResult(await analyzeMakeup(selectedImage, { scenario, recheck, recheckOutcome: $('#recheck-outcome').value, previousResult }));
+      if (version !== runVersion) return;
+      result = response; phase = recheck ? 5 : 2;
+      $('#result-disclosure').open = false;
+      history.push(response.title + '（预设演示）'); record('demo_result_' + response.status);
+    } catch (error) {
+      if (version !== runVersion) return;
+      $('#photo-status').textContent = '未能完成流程，请重试。没有自动替换为成功结果。'; record('analysis_error');
+    } finally { if (version === runVersion) { busy = false; render(true, true); } }
+    return;
+  }
+  if (phase === 2) {
+    if (result.status === 'uncertain') { removePhoto(); withoutPhoto = false; result = null; phase = 1; history.push('重新准备首次检查照片。'); }
+    else if (result.status === 'clear') return finish();
+    else { phase = 3; record('guidance_opened'); history.push('听取一个动作：处理你自己的右侧嘴角。'); }
+  } else if (phase === 3) return prepareAgain();
+  else if (phase === 5) { if (result.status === 'clear') return finish(); return prepareAgain(); }
+  render(true, true);
+}
+function reset(announce = false) {
+  runVersion++; photoVersion++; stopSpeech(); closeCamera(); removePhoto();
+  phase = 0; busy = false; paused = false; result = null; previousResult = null; withoutPhoto = false;
+  history.length = 0; events.length = 0; startedAt = null; repeats = 0;
+  if (exportURL) URL.revokeObjectURL(exportURL); exportURL = null; $('#session-export').hidden = true; $('#session-json').value = ''; $('#download-session').removeAttribute('href');
+  render(announce, true);
+}
+function removePhoto() {
+  photoVersion++;
+  if (photoURL) URL.revokeObjectURL(photoURL);
+  photoURL = null; selectedImage = null;
+  $('#photo-preview').removeAttribute('src'); $('#photo-preview').hidden = true;
+  $('#remove-photo').hidden = true; $('#photo').value = ''; $('#photo-quality').hidden = true;
+  $('#camera-empty').hidden = !!stream; $('#video').style.display = stream ? 'block' : 'none';
+  $('#photo-status').textContent = '尚未选择照片。';
+}
+async function setPhoto(blob) {
+  const version = ++photoVersion, url = URL.createObjectURL(blob), image = new Image();
+  try {
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error('请使用有效的 JPG、PNG 或 WebP 照片。')); image.src = url; });
+    if (image.naturalWidth * image.naturalHeight > 40000000) throw new Error('照片分辨率过大，请缩小后再试。');
+    const quality = await assessPhotoQuality(image);
+    if (version !== photoVersion) { URL.revokeObjectURL(url); return; }
+    closeCamera();
+    if (photoURL) URL.revokeObjectURL(photoURL);
+    photoURL = url; selectedImage = blob; withoutPhoto = false;
+    $('#photo-preview').src = url; $('#photo-preview').hidden = false;
+    $('#camera-empty').hidden = true; $('#remove-photo').hidden = false;
+    $('#photo-status').textContent = '照片已准备好，仅保留在当前浏览器。口红结果仍为预设。';
+    $('#photo-quality').hidden = false; $('#photo-quality').classList.toggle('quality-warning', quality.warning);
+    $('#quality-message').textContent = quality.message; $('#quality-note').textContent = quality.note;
+    record('photo_prepared'); render();
+  } catch (error) { URL.revokeObjectURL(url); if (version === photoVersion) throw error; }
+}
+function cancelCountdown() {
+  if (countdownTimer !== null) clearTimeout(countdownTimer);
+  countdownTimer = null; capturing = false; $('#capture').textContent = '3 秒后拍摄';
+}
+function closeCamera() {
+  cameraVersion++; cameraPending = false; cancelCountdown();
+  stream?.getTracks().forEach(track => track.stop()); stream = null;
+  $('#video').srcObject = null; $('#video').style.display = 'none';
+  $('#camera-empty').hidden = !!selectedImage;
+  $('#camera-state').textContent = '摄像头已关闭'; $('#camera-button').textContent = '开启摄像头预览';
+  $('#camera-button').disabled = false; $('#capture').disabled = true;
+  $('#camera-message').textContent = '摄像头已关闭，可上传已有照片。';
+}
+$('#camera-button').addEventListener('click', async () => {
+  if (stream) { closeCamera(); render(); return; }
+  if (cameraPending) return;
+  if (!navigator.mediaDevices?.getUserMedia) { $('#camera-message').textContent = '当前环境不支持摄像头，请上传已有照片。'; return; }
+  const version = ++cameraVersion;
+  cameraPending = true; render(); $('#camera-message').textContent = '等待摄像头许可；也可直接上传照片。';
+  try {
+    const opened = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    if (version !== cameraVersion) { opened.getTracks().forEach(track => track.stop()); return; }
+    stream = opened; $('#video').srcObject = opened; await $('#video').play();
+    if (version !== cameraVersion) return;
+    removePhoto(); $('#camera-empty').hidden = true; $('#video').style.display = 'block';
+    $('#camera-state').textContent = '本机预览 · 无实时定位'; $('#camera-button').textContent = '关闭摄像头';
+    $('#camera-message').textContent = '手机放稳后可倒计时拍摄。预览为镜像，拍摄保留原始方向。'; record('camera_opened');
+  } catch (error) {
+    if (version !== cameraVersion) return;
+    closeCamera(); $('#camera-message').textContent = error.name === 'NotAllowedError' ? '摄像头权限未开启，请上传照片或明确选择无照片演示。' : '摄像头未能打开，请上传照片或选择无照片演示。';
+  } finally { if (version === cameraVersion) { cameraPending = false; render(); } }
+});
+$('#capture').addEventListener('click', () => {
+  const video = $('#video');
+  if (!stream || capturing || !video.videoWidth) { $('#camera-message').textContent = '画面尚未准备好，请稍后重试。'; return; }
+  capturing = true; const version = cameraVersion; let seconds = 3; render();
+  const tick = () => {
+    if (version !== cameraVersion || !stream) return;
+    if (seconds > 0) {
+      $('#capture').textContent = seconds + ' 秒后拍摄'; $('#camera-message').textContent = seconds + ' 秒后拍摄，请保持手机稳定。';
+      speakText(String(seconds)); seconds--; countdownTimer = setTimeout(tick, 1000); return;
+    }
+    countdownTimer = null;
+    const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(async blob => {
+      if (version !== cameraVersion) return;
+      capturing = false; $('#capture').textContent = '3 秒后拍摄';
+      if (!blob) { $('#camera-message').textContent = '拍摄失败，请重试或上传照片。'; render(); return; }
+      try { await setPhoto(blob); speakText('照片已准备好。口红结果仍为预设演示。'); }
+      catch (error) { $('#photo-status').textContent = error.message; render(); }
+    }, 'image/jpeg', .9);
+  };
+  tick();
+});
+$('#photo').addEventListener('change', async event => {
+  const file = event.target.files[0]; if (!file) return;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+    $('#photo-status').textContent = '请选择不超过 10 MB 的 JPG、PNG 或 WebP 照片。'; event.target.value = ''; return;
+  }
+  try { await setPhoto(file); }
+  catch (error) { $('#photo-status').textContent = '照片无法读取：' + error.message; event.target.value = ''; }
+});
+$('#remove-photo').addEventListener('click', () => { removePhoto(); withoutPhoto = false; record('photo_removed'); render(); $('#photo').focus(); });
+$('#framing-guide').addEventListener('click', () => { speakText($('#framing-text').textContent); record('framing_guide'); });
+$('#next').addEventListener('click', advance);
+$('#no-photo').addEventListener('click', () => { withoutPhoto = true; closeCamera(); removePhoto(); record('explicit_no_photo_demo'); render(true, true); });
+$('#finish').addEventListener('click', finish);
+$('#retake').addEventListener('click', () => { if (phase === 5 || phase === 3) prepareAgain(); else { result = null; phase = 1; withoutPhoto = false; removePhoto(); closeCamera(); record('retake_first'); render(true, true); } });
+$('#repeat').addEventListener('click', () => { repeats++; record('repeat_guidance'); speak(); });
+$('#restart').addEventListener('click', () => reset(true));
+$('#clear-session').addEventListener('click', () => { reset(false); $('#voice-status').textContent = '记录与照片已清除，摄像头已关闭。'; });
+$('#pause').addEventListener('click', () => { paused = !paused; stopSpeech(); if (paused) closeCamera(); record(paused ? 'paused' : 'resumed'); render(!paused, true); });
+$('#voice').addEventListener('change', () => { savePreferences(); if ($('#voice').checked) speak(); else { stopSpeech(); $('#voice-status').textContent = '自动语音已关闭，请使用文字或屏幕阅读器。'; } });
+$('#large').addEventListener('click', () => { const active = document.documentElement.classList.toggle('large'); $('#large').setAttribute('aria-pressed', String(active)); $('#large').textContent = active ? '标准字号' : '大字模式'; savePreferences(); });
+document.querySelectorAll('[name=scenario]').forEach(el => el.addEventListener('change', () => { scenario = el.value; reset(false); }));
+$('#recheck-outcome').addEventListener('change', () => { $('#voice-status').textContent = '下一次复查将使用所选预设分支。'; });
+$('#export-session').addEventListener('click', () => {
+  const data = { schemaVersion: 1, mode: 'demo', note: '个人流程日志，不含照片，不是用户研究或准确率证据。', elapsedSeconds: phase === 6 ? (events.at(-1)?.elapsedSeconds || 0) : startedAt === null ? 0 : Math.round((performance.now() - startedAt) / 1000), repeatCount: repeats, events };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  if (exportURL) URL.revokeObjectURL(exportURL);
+  exportURL = URL.createObjectURL(blob); $('#download-session').href = exportURL;
+  $('#session-json').value = JSON.stringify(data, null, 2); $('#session-export').hidden = false;
+  $('#export-status').textContent = '可保存文件；若浏览器不支持下载，也可复制上方文本。'; $('#session-json').focus();
+});
+$('#copy-session').addEventListener('click', async () => {
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error('Unavailable');
+    await navigator.clipboard.writeText($('#session-json').value); $('#export-status').textContent = '记录已复制。';
+  } catch { $('#session-json').focus(); $('#session-json').select(); $('#export-status').textContent = '请按 Command+C 或 Ctrl+C 复制选中的记录。'; }
+});
+function savePreferences() {
+  try { localStorage.setItem('hear-your-look-preferences', JSON.stringify({ voice: $('#voice').checked, speed: $('#speed').value, large: document.documentElement.classList.contains('large'), contrast: document.documentElement.classList.contains('high-contrast') })); } catch { /* Storage may be disabled; settings still work for this page. */ }
+}
+function restorePreferences() {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('hear-your-look-preferences') || 'null'); if (!prefs) return;
+    if (typeof prefs.voice === 'boolean') $('#voice').checked = prefs.voice;
+    if (['0.7', '0.9', '1.1'].includes(prefs.speed)) $('#speed').value = prefs.speed;
+    if (prefs.large) { document.documentElement.classList.add('large'); $('#large').textContent = '标准字号'; $('#large').setAttribute('aria-pressed', 'true'); }
+    if (prefs.contrast) { document.documentElement.classList.add('high-contrast'); $('#contrast').textContent = '标准对比度'; $('#contrast').setAttribute('aria-pressed', 'true'); }
+  } catch { /* Invalid or unavailable storage is ignored. */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) { stopSpeech(); closeCamera(); render(); } });
+window.addEventListener('pagehide', () => { runVersion++; stopSpeech(); closeCamera(); removePhoto(); if (exportURL) URL.revokeObjectURL(exportURL); });
+restorePreferences(); render();
