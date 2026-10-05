@@ -12,12 +12,12 @@ function record(type) {
   events.push({ type, elapsedSeconds: startedAt === null ? 0 : Math.round((performance.now() - startedAt) / 1000) });
 }
 function content() {
-  if (phase === 0) return ['准备开始', '先做一次口红检查。', '先固定手机并准备照片。这是演示原型：照片不会上传，口红判断仍来自预设场景。', '准备照片', '演示原型 · 未接入真实 AI'];
-  if (phase === 1 || phase === 4) return [phase === 1 ? '01 / 照片准备' : '04 / 重新准备', phase === 1 ? '准备一张照片。' : '调整后，再准备一张照片。', selectedImage ? '照片已准备好。可运行预设流程；结果不来自这张照片。' : '拍摄或上传照片后再继续。也可以明确选择下方的无照片演示。', phase === 1 ? '运行预设检查' : '运行预设复查', withoutPhoto ? '已选择无照片演示' : selectedImage ? '照片仅在本机 · 妆容结果为预设' : '等待照片或无照片演示选择'];
-  if (phase === 2) return ['02 / 预设结果', result.title, result.status === 'adjust' ? '下面可以听取一条调整指引。你也可以暂不调整，直接结束体验。' : result.guidance, result.status === 'uncertain' ? '重新准备照片' : result.status === 'clear' ? '完成本次演示' : '听取一步指引', '预设结果 · 没有识别照片'];
-  if (phase === 3) return ['03 / 一个动作', '先只处理右侧嘴角。', result.guidance, '已调整，准备复查', '以你自己的左右为准 · 可随时结束'];
-  if (phase === 5) return ['04 / 预设复查', result.title, result.guidance, result.status === 'clear' ? '完成本次演示' : '重新准备照片', '预设复查 · 不代表实际改善'];
-  return ['体验结束', '按你的节奏，完成这次体验。', '你可以导出本次流程记录，或重新开始。演示中的结论不能作为照片分析效果或准确率证明。', '再体验一次', '体验已结束 · 摄像头和照片已释放'];
+  if (phase === 0) return ['准备开始', '先做一次口红检查。', '先固定手机并准备照片。这是演示原型：照片不会上传，口红判断仍来自预设场景。', '准备照片', '演示原型，未接入真实 AI'];
+  if (phase === 1 || phase === 4) return [phase === 1 ? '照片准备' : '重新准备', phase === 1 ? '准备一张照片。' : '调整后，再准备一张照片。', selectedImage ? '照片已准备好。可运行预设流程；结果不来自这张照片。' : '拍摄或上传照片后再继续。也可以明确选择下方的无照片演示。', phase === 1 ? '运行预设检查' : '运行预设复查', withoutPhoto ? '已选择无照片演示' : selectedImage ? '照片仅在本机，妆容结果为预设' : '等待照片或无照片演示选择'];
+  if (phase === 2) return ['预设结果', result.title, result.status === 'adjust' ? '下面可以听取一条调整指引。你也可以暂不调整，直接结束体验。' : result.guidance, result.status === 'uncertain' ? '重新准备照片' : result.status === 'clear' ? '完成本次演示' : '听取一步指引', '预设结果，没有识别照片'];
+  if (phase === 3) return ['一个动作', '先只处理右侧嘴角。', result.guidance, '已调整，准备复查', '以你自己的左右为准，可随时结束'];
+  if (phase === 5) return ['预设复查', result.title, result.guidance, result.status === 'clear' ? '完成本次演示' : '重新准备照片', '预设复查，不代表实际改善'];
+  return ['体验结束', '按你的节奏，完成这次体验。', '你可以导出本次流程记录，或重新开始。演示中的结论不能作为照片分析效果或准确率证明。', '再体验一次', '体验已结束，摄像头和照片已释放'];
 }
 function stopSpeech() {
   speechVersion++;
@@ -57,6 +57,9 @@ function render(announce = false, focus = false) {
   $('#finish').hidden = phase === 0 || phase === 6;
   $('#finish').textContent = [2, 3].includes(phase) ? '暂不调整，结束体验' : '结束本次体验';
   const stage = phase <= 1 ? 0 : phase === 2 ? 1 : phase === 3 ? 2 : 3;
+  document.body.classList.toggle('paused', paused);
+  document.body.classList.toggle('processing', busy);
+  document.body.dataset.stage = String(stage);
   document.querySelectorAll('[data-stage]').forEach(el => { el.removeAttribute('aria-current'); if (+el.dataset.stage === stage) el.setAttribute('aria-current', 'step'); });
   $('#result-disclosure').hidden = !(result && [2, 3, 5].includes(phase) && !busy);
   $('#result-details').replaceChildren();
@@ -174,7 +177,7 @@ $('#camera-button').addEventListener('click', async () => {
     stream = opened; $('#video').srcObject = opened; await $('#video').play();
     if (version !== cameraVersion) return;
     removePhoto(); $('#camera-empty').hidden = true; $('#video').style.display = 'block';
-    $('#camera-state').textContent = '本机预览 · 无实时定位'; $('#camera-button').textContent = '关闭摄像头';
+    $('#camera-state').textContent = '本机预览，无实时定位'; $('#camera-button').textContent = '关闭摄像头';
     $('#camera-message').textContent = '手机放稳后可倒计时拍摄。预览为镜像，拍摄保留原始方向。'; record('camera_opened');
   } catch (error) {
     if (version !== cameraVersion) return;
