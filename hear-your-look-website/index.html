@@ -1,12 +1,350 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>听见妆容 · Hear Your Look</title><meta name="description" content="面向低视力用户的口红语音辅助原型：取景、检查、纠正、复查。"><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23613aea'/%3E%3Cpath d='M16 27v10m10-20v30m12-35v40m10-26v12' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"><script src="app.js" defer></script></head>
-<body><link rel="stylesheet" href="polish.css"><script src="polish.js" defer></script><a class="skip" href="#main">跳到美妆工作台</a><header class="top"><a class="brand" href="#main"><span class="logo" aria-hidden="true">|||</span><span>听见妆容<small>HEAR YOUR LOOK</small></span></a><nav aria-label="页面导航"><a class="nav-current" href="#main">产品体验</a><a href="#plan">了解产品</a></nav><div class="settings"><button id="large" aria-pressed="false">大字模式</button><label><input id="voice" type="checkbox" checked>语音播报</label></div></header>
-<main id="main"><div class="heading"><div><p class="eyebrow">BEAUTY, ON YOUR TERMS. <span>为自主而设计</span></p><h1>你的妆容，<em>由你掌握。</em></h1><p class="lead">从一处唇线开始，把每一步变得清晰。<br>听见提示，按照自己的节奏，完成属于你的妆容。</p></div><div class="edition"><span>01</span><p>LIP STUDIO<br>口红辅助工作台</p></div></div><div class="notice"><strong>交互原型 · 演示模式</strong><span>检查结果为预设场景，尚未接入视觉识别。开启摄像头后，画面仅在本机预览。</span></div>
-<div class="studio-toolbar"><div><span class="task-chip">正在体验</span><strong>口红 · 唇线检查</strong></div><div class="studio-options"><label for="speed">播报语速</label><select id="speed"><option value="0.7">慢速</option><option value="0.9" selected>舒缓</option><option value="1.1">标准</option></select><button id="contrast" aria-pressed="false">高对比度</button><button id="focus" aria-pressed="false">专注体验</button></div></div>
-<ol class="steps" aria-label="任务进度"><li data-stage="0" aria-current="step"><span>01</span>取景准备</li><li data-stage="1"><span>02</span>检查口红</li><li data-stage="2"><span>03</span>语音纠正</li><li data-stage="3"><span>04</span>再次检查</li></ol>
-<div class="workspace"><section class="camera card" aria-labelledby="mirror-title"><div class="panel-head"><h2 id="mirror-title">你的镜前空间</h2><span id="camera-state">摄像头已关闭</span></div><div class="viewfinder"><video id="video" autoplay muted playsinline aria-label="本地摄像头预览"></video><div id="camera-empty"><div class="frame-icon" aria-hidden="true">＋</div><h3>先把手机放稳</h3><p>将脸部置于画面中央，正面均匀照明。<br>也可以直接体验演示，无需开启摄像头。</p></div><div class="frame-guide" aria-hidden="true"></div><span class="view-label">前置镜像预览 · 指令以你自己的左右为准</span></div><div class="camera-actions"><button id="camera-button" class="outline">开启摄像头预览</button><p id="camera-message" role="status">没有摄像头也可以完成演示。</p></div><fieldset class="scenarios"><legend>演示场景</legend><label><input type="radio" name="scenario" value="overflow" checked>唇线外溢</label><label><input type="radio" name="scenario" value="clear">未见明显问题</label><label><input type="radio" name="scenario" value="uncertain">光线不足</label></fieldset></section>
-<section class="coach card" aria-labelledby="coach-title"><div class="panel-head"><h2 id="coach-title">语音陪伴</h2><span class="demo-badge">预设场景</span></div><div class="instruction"><div class="voice-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><p class="eyebrow" id="step-label">准备好了就开始</p><div id="live" aria-live="polite" aria-atomic="true"><h2 id="instruction-title">我们先检查口红。</h2><p id="instruction-body">按下开始体验，听取取景提示。演示会模拟检查结果，带你走完一次修正流程。</p></div><div class="status-label" id="result-label">等待开始</div><button class="primary" id="next">开始体验</button><div class="secondary-actions"><button id="repeat">重听提示</button><button id="pause" aria-pressed="false">暂停体验</button></div><p id="voice-status" role="status" class="hint">语音由浏览器朗读，支持情况取决于设备。</p></div><div class="session-footer"><span>口红任务 · 一次一个动作</span><button id="restart">重新开始</button></div></section></div>
-<section class="session-detail"><div><p class="eyebrow">YOUR SESSION</p><h2>每一步，都有迹可循。</h2><p>按你的节奏推进，随时暂停或重听。</p></div><ol id="history"><li>等待体验开始。所有记录只保留在当前页面。</li></ol></section>
-<section class="product-story" aria-labelledby="story-title"><div class="story-lead"><p class="eyebrow">DESIGNED FOR INDEPENDENCE</p><h2 id="story-title">出门前的最后一刻，<br>也可以自己确认。</h2><p>一处不确定的唇线，一次需要请人帮忙的检查。我们想让这个日常时刻，多一份自主。</p><a href="#main" class="story-link">体验口红辅助</a></div><div class="story-sequence"><article><span>01</span><div><h3>先看清画面</h3><p>画面质量是判断的前提。看不清时，先调整光线与位置。</p></div></article><article><span>02</span><div><h3>只说下一步</h3><p>以用户自己的左右定位，一次提示一处，减少理解负担。</p></div></article><article><span>03</span><div><h3>把确认交还给你</h3><p>调整后再次检查，按自己的节奏决定何时继续。</p></div></article></div></section>
-<section id="plan" class="plan"><div class="plan-heading"><p class="eyebrow">项目简版 / 团队讨论稿</p><h2>听见妆容：把检查变成<br>可以完成的下一步。</h2><p>面向希望独立完成基础妆容的低视力用户，先验证口红一个任务：用户能否听懂定位、完成修正并自主复查。</p></div><div class="plan-grid"><article><span class="index">01 / 用户与问题</span><h3>看不清，怎么知道涂对了？</h3><p>出门前独立化妆时，用户需要知道是否越过唇线、哪里需要处理、调整后有没有改善。真实需求由低视力用户访谈确认。</p></article><article><span class="index">02 / 最小方案</span><h3>手机 + 支架 + 语音反馈</h3><p>取景质量检查 → 唇部区域检查 → 一条明确指令 → 用户确认 → 再次检查。大按钮、键盘操作和重听功能贯穿流程。</p></article><article><span class="index">03 / 待验证差异</span><h3>把纠正过程做到可靠</h3><p>对齐用户自己的左右方向；一次只提示一处；画面质量不足时要求重拍。是否优于现有辅助工具，需要对照测试。</p></article><article><span class="index">04 / 衡量方式</span><h3>用任务完成情况说话</h3><p>记录独立完成率、指令理解率、修正前后差异、错误提示率和完成时间。暂不填写未经测试的准确率或效果数据。</p></article></div><div class="scope"><div><h3>这一版已经可体验</h3><p>三种预设场景、逐步纠正、浏览器语音、大字模式、键盘操作、本地摄像头预览。</p></div><div><h3>下一版要验证</h3><p>真实口红区域检测、不同光照与肤色的稳定性、修正前后复查。眉妆作为扩展，底妆暂缓。</p></div></div>
-<h3 class="schedule-title">三个人，先完成一条闭环</h3><div class="schedule"><article><b>产品与用户研究</b><p>联系真实低视力用户；访谈使用场景；验证左右定位与指令措辞；整理试用反馈。</p><span>第一天：需求与流程</span></article><article><b>视觉与验证</b><p>实现取景质量检查和口红外溢检测；准备授权样本；整理失败案例与评估指标。</p><span>第二天：检测与复查</span></article><article><b>交互与演示</b><p>完善摄像头、语音、键盘流程；连接视觉接口；准备完整演示与异常回退。</p><span>共同：整合、测试、排练</span></article></div><details><summary>建议的 60 秒演示脚本</summary><p>0–10 秒：说明用户与任务。10–20 秒：取景提示。20–35 秒：发现一处外溢并给出单一纠正指令。35–50 秒：用户完成修正、重新检查。50–60 秒：展示光线不足时的判断边界。当前网页可用于流程排练，不能作为视觉模型效果证明。</p></details></section><footer><span>听见妆容 · Hear Your Look</span><span>参赛原型 / 非赛事官方产品</span></footer></main></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0c0b0d">
+  <title>听见妆容 | Hear Your Look</title>
+  <meta name="description" content="面向低视力用户的口红语音辅助原型：取景、检查、纠正、复查。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%237c243d'/%3E%3Cpath d='M16 27v10m10-20v30m12-35v40m10-26v12' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preload" as="image" href="assets/hero-campaign-wide.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="polish.css">
+  <link rel="stylesheet" href="checks.css">
+  <link rel="stylesheet" href="integration.css">
+  <script src="analysis.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="polish.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#studio">跳到口红检查工作台</a>
+
+  <header class="top">
+    <a class="brand" href="#main" aria-label="听见妆容首页">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" focusable="false">
+          <path class="brand-monogram" d="M9 9v46M26 9v46M9 32h17M26 9l12 21L50 9M38 30v25h17"/>
+          <path class="brand-accent" d="M9 59h46"/>
+        </svg>
+      </span>
+      <span class="brand-name">听见妆容<small>Hear Your Look</small></span>
+    </a>
+    <nav aria-label="页面导航">
+      <a href="#checks">设计出发点</a>
+      <a href="#studio">产品体验</a>
+    </nav>
+    <details class="display-settings" open>
+      <summary>显示与语音</summary>
+      <div class="settings" aria-label="无障碍显示与播报设置">
+        <button id="large" aria-pressed="false">大字模式</button>
+        <label class="voice-toggle"><input id="voice" type="checkbox" checked><span>语音播报</span></label>
+      </div>
+    </details>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="hero" aria-labelledby="hero-title">
+      <figure class="hero-visual" data-reveal>
+        <div class="hero-media">
+          <img src="assets/hero-campaign-wide.png" width="1792" height="1024" alt="黑色镜面中立着一支酒红色口红，银色声波从画面中穿过">
+        </div>
+        <figcaption>参赛交互原型 / 非赛事官方产品</figcaption>
+      </figure>
+      <div class="hero-copy" data-reveal>
+        <h1 id="hero-title">让妆容检查，<br>成为听得懂的下一步。</h1>
+        <p class="hero-lead">为有化妆经验的低视力用户设计。拍照、听取一个动作、调整，再次确认。</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#studio">开始口红检查</a>
+          <a class="text-link" href="#checks">为什么需要它</a>
+        </div>
+      </div>
+      <div class="hero-signal" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </section>
+
+    <section id="checks" class="problem" aria-labelledby="checks-title">
+      <div class="problem-wordmark" aria-hidden="true">INDEPENDENT BEAUTY</div>
+      <div class="checks-signature" aria-hidden="true" data-reveal>
+        <svg viewBox="0 0 1200 280" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="checks-silver" x1="0" x2="1">
+              <stop offset="0" stop-color="#777276"/>
+              <stop offset=".42" stop-color="#f2efec"/>
+              <stop offset=".72" stop-color="#9d999c"/>
+              <stop offset="1" stop-color="#5f5a5e"/>
+            </linearGradient>
+          </defs>
+          <path class="checks-signal-shadow" d="M0 205C150 205 176 48 318 48S478 225 632 225 825 74 980 74 1090 164 1200 164"/>
+          <path class="checks-signal-line" d="M0 205C150 205 176 48 318 48S478 225 632 225 825 74 980 74 1090 164 1200 164"/>
+          <path class="checks-signal-accent" d="M568 220C590 225 610 225 632 225 664 225 692 218 718 205"/>
+        </svg>
+      </div>
+      <p class="section-note" data-reveal>不是教人化妆，而是补上独立完成前的最后一次确认。</p>
+      <div class="problem-intro" data-reveal>
+        <h2 id="checks-title"><span class="checks-title-accent">看不清，</span><span>不等于不能</span><em>自己确认。</em></h2>
+      </div>
+      <div class="problem-editorial" data-reveal>
+        <p class="problem-lead">很多低视力用户已经有自己的化妆经验。真正缺少的，是出门前无需依赖他人的一次检查。</p>
+        <div class="problem-questions" aria-label="用户在口红检查中的三个问题">
+          <p><span>LEFT / RIGHT</span>越过唇线了吗？</p>
+          <p><span>ONE ACTION</span>应该处理哪一边？</p>
+          <p><span>RECHECK</span>调整后改善了吗？</p>
+        </div>
+      </div>
+      <div class="problem-principles" data-reveal>
+        <div data-index="01"><strong>位置要明确</strong><span>始终以用户自己的左右为准。</span></div>
+        <div data-index="02"><strong>动作要单一</strong><span>一次只说一个动作，减少记忆与理解负担。</span></div>
+        <div data-index="03"><strong>边界要诚实</strong><span>画面不足时要求重拍，不把不确定伪装成答案。</span></div>
+      </div>
+      <div class="checks-actions" data-reveal>
+        <div class="checks-instrument" aria-label="原型能力标签"><span>LOCAL</span><span>PRESET</span><span>VOICE FIRST</span></div>
+        <a class="checks-cta" href="#studio"><span>进入口红检查</span><i aria-hidden="true">→</i></a>
+      </div>
+    </section>
+
+    <div class="sound-ribbon" aria-label="体验流程：取景、检查、纠正、复查">
+      <div class="sound-ribbon-track" aria-hidden="true">
+        <span>取景</span><i></i><span>检查</span><i></i><span>纠正</span><i></i><span>复查</span><i></i>
+        <span>取景</span><i></i><span>检查</span><i></i><span>纠正</span><i></i><span>复查</span>
+      </div>
+    </div>
+
+    <section id="flow" class="flow-story" aria-labelledby="flow-title">
+      <div class="flow-stage" data-reveal>
+        <div class="flow-stage-media"><img src="assets/flow-poster-borderless.png" width="1024" height="1536" alt="红色玻璃唇形与银色声波交织；一段声音，一次动作。"></div>
+        <div class="flow-current" aria-hidden="true">
+          <span data-flow-label="framing">取景</span>
+          <span data-flow-label="checking">检查</span>
+          <span data-flow-label="guidance">纠正</span>
+          <span data-flow-label="recheck">复查</span>
+        </div>
+        <div class="flow-heading">
+          <h2 id="flow-title">一段声音，<br>一次动作。</h2>
+          <p>声音不是装饰。它把视觉判断拆成可以暂停、重听和继续的步骤。</p>
+        </div>
+      </div>
+      <div class="flow-track">
+        <article data-flow-step="framing" data-reveal>
+          <span>取景</span><h3>先得到一张可以判断的照片。</h3><p>固定手机，面向均匀光源。画面不足时，先重拍，不急着给结论。</p>
+          <figure class="flow-step-visual" aria-label="手机镜头取景嘴唇的示意图"><img src="assets/flow-sequence.png" width="2172" height="724" alt="手机镜头正对嘴唇，帮助用户准备可供检查的照片"></figure>
+        </article>
+        <article data-flow-step="checking" data-reveal>
+          <span>检查</span><h3>这一次，只确认口红是否越过唇线。</h3><p>不扩大能力边界，也不把本机亮度提示说成妆容识别。</p>
+          <figure class="flow-step-visual" aria-label="检查口红唇线的示意图"><img src="assets/flow-sequence.png" width="2172" height="724" alt="银色轮廓标出口红在右侧唇角越过唇线的位置"></figure>
+        </article>
+        <article data-flow-step="guidance" data-reveal>
+          <span>纠正</span><h3>听清位置，然后只做一个动作。</h3><p>说清用户自己的左右和方向，让调整发生在她自己的节奏里。</p>
+          <figure class="flow-step-visual" aria-label="单步纠正口红的示意图"><img src="assets/flow-sequence.png" width="2172" height="724" alt="棉签靠近右侧唇角，示意一次只完成一个纠正动作"></figure>
+        </article>
+        <article data-flow-step="recheck" data-reveal>
+          <span>复查</span><h3>再看一次，把决定交还给用户。</h3><p>确认改善、继续调整或结束。每个出口都明确，不强迫完成。</p>
+          <figure class="flow-step-visual" aria-label="再次检查口红的示意图"><img src="assets/flow-sequence.png" width="2172" height="724" alt="修正后的口红唇线旁出现平静的确认波纹"></figure>
+        </article>
+      </div>
+    </section>
+
+    <section id="studio" class="studio" aria-labelledby="studio-title">
+      <div class="studio-intro" data-reveal>
+        <div>
+          <h2 id="studio-title">口红检查工作台</h2>
+          <p>从准备照片开始，听取一个动作，再次检查。可选择预设演示或实验性模型检查。</p>
+        </div>
+        <div class="studio-meta"><span>本机亮度提示</span><span>来源明确</span><span>可随时暂停</span></div>
+      </div>
+
+      <div class="notice" role="note">
+        <strong>参赛原型 · 模型能力未经验证</strong>
+        <span>演示模式不发送照片；真实模式经同意后发送给 OpenRouter 及模型提供商。两种模式的结果来源始终标注。</span>
+      </div>
+
+      <fieldset class="analysis-settings">
+        <legend>检查方式</legend>
+        <label for="analysis-mode">选择模式</label>
+        <select id="analysis-mode" aria-describedby="analysis-help">
+          <option value="demo">预设演示 · 不发送照片</option>
+          <option value="ai">真实检查 · 实验性模型</option>
+        </select>
+        <p id="analysis-help">默认演示模式。真实模式需要可用的项目服务端和模型配置；模型判断可能出错。</p>
+        <div id="ai-settings" hidden>
+          <p id="privacy-help">本次照片会缩小至最长边 1600px、重新编码后，经项目服务端发送给 OpenRouter 和模型提供商。项目服务端不落盘保存照片；外部服务处理与留存受其政策约束。本原型不保证识别正确，不用于医疗判断。</p>
+          <label for="photo-orientation">照片方向</label>
+          <select id="photo-orientation" aria-describedby="orientation-help">
+            <option value="unknown">不确定，请先确认</option>
+            <option value="normal">原始方向（非镜像）</option>
+            <option value="mirrored">已左右翻转（镜像）</option>
+          </select>
+          <p id="orientation-help">网页摄像头拍摄自动标为原始方向。已有自拍可能镜像，不确定时请用网页摄像头重新拍摄；模型无法可靠推断镜像。</p>
+          <label class="send-consent" for="send-consent"><input id="send-consent" type="checkbox" aria-describedby="privacy-help"><span>我有权使用这张照片，并同意发送本次照片用于模型检查。</span></label>
+        </div>
+      </fieldset>
+
+      <div class="studio-toolbar">
+        <div class="active-task"><span class="task-chip">当前任务</span><strong>口红唇线检查</strong></div>
+        <div class="studio-options">
+          <label for="speed">播报语速</label>
+          <select id="speed">
+            <option value="0.7">慢速</option>
+            <option value="0.9" selected>舒缓</option>
+            <option value="1.1">标准</option>
+          </select>
+          <button id="contrast" aria-pressed="false">高对比度</button>
+          <button id="focus" aria-pressed="false">专注体验</button>
+        </div>
+      </div>
+
+      <ol class="steps" aria-label="任务进度">
+        <li data-stage="0" aria-current="step"><span>取景准备</span></li>
+        <li data-stage="1"><span>检查口红</span></li>
+        <li data-stage="2"><span>语音纠正</span></li>
+        <li data-stage="3"><span>再次检查</span></li>
+      </ol>
+
+      <div class="workspace">
+        <section class="camera card" aria-labelledby="mirror-title">
+          <div class="panel-head">
+            <h2 id="mirror-title">你的镜前空间</h2>
+            <span id="camera-state">摄像头已关闭</span>
+          </div>
+          <div class="viewfinder">
+            <img id="photo-preview" alt="你选择的口红检查照片" hidden>
+            <video id="video" autoplay muted playsinline aria-label="本地摄像头预览"></video>
+            <div id="camera-empty">
+              <div class="frame-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <h3>先把手机放稳</h3>
+              <p>面向均匀光源，嘴唇自然闭合。摄像头预览不提供自动人脸定位。</p>
+            </div>
+            <div class="frame-guide" aria-hidden="true"></div>
+            <span class="view-label">预览为镜像，照片保留原始方向。指引以你自己的左右为准。</span>
+          </div>
+          <div class="framing-help">
+            <button id="framing-guide">听取拍照准备指引</button>
+            <p id="framing-text">把手机放稳，镜头朝向自己。面向均匀光源，嘴唇自然闭合。准备好后，可启动三秒倒计时拍摄。</p>
+            <p class="hint">当前只有准备指引，没有实时嘴唇追踪。需要时可上传一张已有照片。</p>
+          </div>
+          <div class="camera-actions">
+            <button id="camera-button" class="outline">开启摄像头预览</button>
+            <p id="camera-message" role="status">没有摄像头也可以完成演示。</p>
+          </div>
+          <div class="photo-actions">
+            <label class="upload-label" for="photo">上传照片</label>
+            <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="upload-help">
+            <button id="capture" disabled>3 秒后拍摄</button>
+            <button id="remove-photo" hidden>移除照片</button>
+            <p id="upload-help">支持 JPG、PNG、WebP，最大 10 MB。选择照片不会自动发送；真实检查需单独同意。</p>
+            <p id="photo-status" role="status">尚未选择照片。</p>
+            <div id="photo-quality" hidden role="status">
+              <strong id="quality-message"></strong>
+              <p id="quality-note"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="coach card" aria-labelledby="coach-title">
+          <div class="panel-head">
+            <h2 id="coach-title">语音陪伴</h2>
+            <span class="demo-badge" id="analysis-badge">预设场景</span>
+          </div>
+          <div class="instruction">
+            <div class="voice-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <p class="step-label" id="step-label">准备好了就开始</p>
+            <div id="live" aria-live="polite" aria-atomic="true">
+              <h2 id="instruction-title">我们先检查口红。</h2>
+              <p id="instruction-body">按下开始体验，听取取景提示。演示会模拟检查结果，带你走完一次修正流程。</p>
+            </div>
+            <p id="source-note" class="source-note">结果来源：预设演示。尚未分析照片。</p>
+            <p id="analysis-error" role="alert" hidden></p>
+            <details id="result-disclosure" hidden>
+              <summary>查看检查详情与判断边界</summary>
+              <dl id="result-details"></dl>
+              <p id="result-evidence"></p>
+            </details>
+            <div class="status-label" id="result-label">等待开始</div>
+            <button class="primary" id="next">开始体验</button>
+            <div class="choice-actions">
+              <button id="no-photo" hidden>不使用照片，体验预设演示</button>
+              <button id="retake" hidden>重新准备照片</button>
+              <button id="finish" hidden>暂不调整，结束体验</button>
+            </div>
+            <div class="secondary-actions">
+              <button id="repeat">重听提示</button>
+              <button id="pause" aria-pressed="false">暂停体验</button>
+            </div>
+            <p id="voice-status" role="status" class="hint">语音由浏览器朗读，支持情况取决于设备。</p>
+            <p class="hint">使用 VoiceOver 或 TalkBack 时，建议关闭自动语音播报，避免重复朗读。</p>
+          </div>
+          <div class="session-footer">
+            <span>一次只处理一个动作</span>
+            <button id="restart">重新开始</button>
+          </div>
+        </section>
+      </div>
+
+      <details class="judge-tools" id="judge-tools">
+        <summary>评委演示设置</summary>
+        <p>这些控件只用于展示不同流程，不是用户的自我诊断，也不影响本机照片亮度提示。</p>
+        <div class="judge-grid">
+          <fieldset class="scenarios">
+            <legend>首次检查场景</legend>
+            <label><input type="radio" name="scenario" value="overflow" checked>唇线外溢</label>
+            <label><input type="radio" name="scenario" value="clear">未见明显问题</label>
+            <label><input type="radio" name="scenario" value="uncertain">无法判断</label>
+          </fieldset>
+          <div>
+            <label for="recheck-outcome">复查演示结果</label>
+            <select id="recheck-outcome">
+              <option value="unchanged">仍需确认</option>
+              <option value="improved">已改善</option>
+              <option value="uncertain">无法判断</option>
+            </select>
+            <p>复查不会自动变好，这里的结果也是预设。</p>
+          </div>
+        </div>
+      </details>
+
+      <section class="session-detail" aria-labelledby="session-title">
+        <div>
+          <h2 id="session-title">每一步，都有迹可循。</h2>
+          <p>按你的节奏推进，随时暂停或重听。</p>
+        </div>
+        <ol id="history"><li>等待体验开始。所有记录只保留在当前页面。</li></ol>
+        <div class="session-controls">
+          <button id="export-session">导出体验记录</button>
+          <button id="clear-session">清除记录与照片</button>
+          <p>由你主动导出用时、流程事件；真实模式还包含模型、照片完整性原因和结果文案，不含照片或密钥。记录仅在当前页面保留，清除或重新开始会删除；请先导出。不是用户研究结果或 AI 准确率证明。</p>
+          <section id="session-export" hidden aria-labelledby="export-title">
+            <h3 id="export-title">本次体验记录</h3>
+            <label for="session-json">可复制的 JSON 记录</label>
+            <textarea id="session-json" readonly rows="8"></textarea>
+            <div>
+              <a id="download-session" class="download-link" download="hear-your-look-demo-session.json">保存 JSON 文件</a>
+              <button id="copy-session">复制记录</button>
+            </div>
+            <p id="export-status" role="status">可保存文件。若浏览器不支持下载，也可复制上方文本。</p>
+          </section>
+        </div>
+      </section>
+    </section>
+
+    <section id="boundary" class="product-story" aria-labelledby="story-title">
+      <div class="story-lead" data-reveal>
+        <h2 id="story-title">知道何时不能判断，<br>也是一种能力。</h2>
+        <p>可靠的辅助不只给答案，也要说明答案从哪里来、什么时候应该停下来。</p>
+      </div>
+      <figure class="story-visual" data-reveal>
+        <img src="assets/boundary-campaign.png" width="1536" height="1024" alt="银色唇形穿过多层磨砂玻璃，酒红色光线从清晰逐渐变得模糊。">
+        <figcaption><strong>判断边界</strong><span>看得见结果来源，也看得见何时该停下。</span></figcaption>
+      </figure>
+      <div class="boundary-list" data-reveal>
+        <article><h3>照片发送由你决定</h3><p>演示不发送照片；真实检查需逐张同意，经项目服务端发送至外部模型服务。项目服务端不落盘保存照片，结束时释放摄像头和浏览器照片。</p></article>
+        <article><h3>结果来源始终可见</h3><p>明确区分本机亮度提示、预设结果和未经验证的模型观察。外部服务的数据政策仍需了解。</p></article>
+        <article><h3>不把不确定说成成功</h3><p>画面、唇线或位置无法确定时先重拍。复查仅观察新照片，不宣称已验证改善。</p></article>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>听见妆容 / Hear Your Look</span>
+    <span>参赛原型 / 非赛事官方产品</span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# Offline Lua/Redis evaluation only. Do not install on the production service.
+-r requirements.txt
+fakeredis[lua]==2.39.0
+redis==8.1.0
+lupa==2.8
+sortedcontainers==2.4.0

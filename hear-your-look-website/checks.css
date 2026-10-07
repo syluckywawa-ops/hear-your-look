@@ -1,0 +1,361 @@
+/* Checks chapter — one authoritative block, isolated from the legacy surface CSS. */
+
+#checks.problem {
+  --checks-gutter: clamp(1.25rem, 5vw, 5rem);
+  position: relative;
+  isolation: isolate;
+  width: min(100%, var(--content-width));
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(10rem, .32fr) minmax(0, 1fr);
+  column-gap: clamp(2.5rem, 6vw, 7rem);
+  row-gap: clamp(1.75rem, 3vw, 3rem);
+  padding-block: clamp(4.5rem, 7vw, 7rem);
+  overflow: hidden;
+  border: 0;
+  background: #f3f1ed;
+  color: #141316;
+}
+
+#checks > :not(.problem-wordmark, .checks-signature) {
+  position: relative;
+  z-index: 2;
+}
+
+#checks .section-note {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: start;
+  max-width: 16rem;
+  margin: 0;
+  padding-top: .85rem;
+  border-top: 1px solid #353237;
+  color: #4e494d;
+  font: 500 .9rem/1.9 var(--font-ui);
+}
+
+#checks .problem-intro {
+  grid-column: 2;
+  grid-row: 1;
+  position: static;
+  margin: 0;
+  transform: none;
+}
+
+#checks .problem-intro h2 {
+  max-width: 8.8em;
+  margin: 0;
+  color: #121115;
+  font-family: var(--font-editorial);
+  font-size: clamp(3.8rem, 6.6vw, 6rem);
+  font-weight: 560;
+  line-height: .98;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+#checks .problem-intro h2 > span,
+#checks .problem-intro h2 > em {
+  display: block;
+}
+
+#checks .problem-intro h2 .checks-title-accent {
+  color: #8f1838;
+  font-style: italic;
+  font-weight: 500;
+}
+
+#checks .problem-intro h2 em {
+  color: #747074;
+  font-style: normal;
+  font-weight: 610;
+  text-shadow: 0 1px 0 #fff, 0 -1px 0 rgb(255 255 255 / .25);
+  -webkit-text-stroke: 0;
+}
+
+#checks .problem-editorial {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(15rem, .48fr) minmax(18rem, .8fr);
+  gap: clamp(2rem, 5vw, 6rem);
+  align-items: start;
+  margin-top: clamp(-1rem, -1.4vw, -.35rem);
+  padding: 0;
+}
+
+#checks .problem-lead {
+  max-width: 24rem;
+  margin: 1rem 0 0;
+  color: #504b50;
+  font: 500 clamp(1rem, 1.2vw, 1.16rem)/1.85 var(--font-ui);
+}
+
+#checks .problem-questions {
+  display: grid;
+  gap: .25rem;
+  padding: 0;
+}
+
+#checks .problem-questions p {
+  position: relative;
+  margin: 0;
+  padding: .28em 0 .34em clamp(2rem, 3vw, 3.1rem);
+  color: #171519;
+  font-family: var(--font-editorial);
+  font-size: clamp(1.75rem, 2.65vw, 3rem);
+  font-weight: 580;
+  line-height: 1.08;
+  letter-spacing: -.025em;
+}
+
+#checks .problem-questions p::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: clamp(1.1rem, 2vw, 2.2rem);
+  height: 1px;
+  background: linear-gradient(90deg, #797479, #dad5d0);
+}
+
+#checks .problem-questions p:nth-child(2) {
+  color: #8f1838;
+  transform: translateX(clamp(-1rem, -1.4vw, -.35rem));
+}
+
+#checks .problem-questions p > span {
+  display: block;
+  margin-bottom: .38rem;
+  color: #716b70;
+  font: 650 .62rem/1 var(--font-ui);
+  letter-spacing: .18em;
+}
+
+#checks .problem-principles {
+  grid-column: 2;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+  margin: .5rem 0 0;
+}
+
+#checks .problem-principles > div {
+  position: relative;
+  min-width: 0;
+  display: block;
+  padding: 1.2rem 0 0 2.8rem;
+  border-top: 1px solid #8e898c;
+}
+
+#checks .problem-principles > div::before {
+  content: attr(data-index);
+  position: absolute;
+  left: 0;
+  top: 1.22rem;
+  color: #8f1838;
+  font: 650 .68rem/1 var(--font-ui);
+  letter-spacing: .12em;
+}
+
+#checks .problem-principles strong {
+  display: block;
+  margin-bottom: .55rem;
+  color: #171519;
+  font-size: 1.02rem;
+}
+
+#checks .problem-principles span {
+  display: block;
+  max-width: 19rem;
+  color: #5a5559;
+  font-size: .94rem;
+  line-height: 1.72;
+}
+
+#checks .checks-actions {
+  grid-column: 2;
+  grid-row: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: .75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #272429;
+}
+
+#checks .checks-instrument {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem 1.25rem;
+  color: #666065;
+  font: 650 .65rem/1 var(--font-ui);
+  letter-spacing: .15em;
+}
+
+#checks .checks-instrument span::before {
+  content: "";
+  display: inline-block;
+  width: .36rem;
+  height: .36rem;
+  margin-right: .5rem;
+  border: 1px solid #8f1838;
+  border-radius: 50%;
+  vertical-align: .03rem;
+}
+
+#checks .checks-cta {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+  padding: .8rem 1rem .8rem 1.2rem;
+  border-bottom: 1px solid #151317;
+  color: #151317;
+  font-weight: 700;
+  transition: color 220ms var(--ease-out), border-color 220ms var(--ease-out);
+}
+
+#checks .checks-cta i {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid #8f1838;
+  border-radius: 50%;
+  color: #8f1838;
+  font-style: normal;
+  transition: transform 300ms var(--ease-out), background-color 220ms var(--ease-out), color 220ms var(--ease-out);
+}
+
+#checks .checks-cta:hover { color: #8f1838; border-color: #8f1838; }
+#checks .checks-cta:hover i { transform: translateX(.2rem); background: #8f1838; color: #fff; }
+
+#checks .problem-wordmark {
+  position: absolute;
+  z-index: 0;
+  right: -2vw;
+  bottom: 1.25rem;
+  color: rgb(18 17 21 / .052);
+  font: italic 400 clamp(5rem, 11vw, 11rem)/.72 var(--font-fashion);
+  letter-spacing: -.045em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+#checks .checks-signature {
+  position: absolute;
+  z-index: 1;
+  left: 20%;
+  right: -3%;
+  top: 38%;
+  height: clamp(8rem, 17vw, 15rem);
+  opacity: .58;
+  pointer-events: none;
+}
+
+#checks .checks-signature svg { width: 100%; height: 100%; overflow: visible; }
+#checks .checks-signal-shadow,
+#checks .checks-signal-line,
+#checks .checks-signal-accent { fill: none; vector-effect: non-scaling-stroke; }
+#checks .checks-signal-shadow { stroke: rgb(69 60 65 / .18); stroke-width: 7; filter: blur(7px); }
+#checks .checks-signal-line { stroke: url(#checks-silver); stroke-width: 1.35; }
+#checks .checks-signal-accent { stroke: #8f1838; stroke-width: 2; }
+
+.high-contrast #checks.problem { background: #050505; color: #fff; }
+.high-contrast #checks .problem-intro h2,
+.high-contrast #checks .problem-intro h2 em,
+.high-contrast #checks .problem-questions p,
+.high-contrast #checks .problem-principles strong,
+.high-contrast #checks .checks-cta { color: #fff; text-shadow: none; }
+.high-contrast #checks .checks-title-accent,
+.high-contrast #checks .problem-questions p:nth-child(2) { color: #ff8cab; }
+.high-contrast #checks .section-note,
+.high-contrast #checks .problem-lead,
+.high-contrast #checks .problem-principles span,
+.high-contrast #checks .checks-instrument { color: #fff; }
+.high-contrast #checks .checks-signature,
+.high-contrast #checks .problem-wordmark { display: none; }
+
+html.large #checks.problem {
+  grid-template-columns: minmax(9rem, .26fr) minmax(0, 1fr);
+}
+
+html.large #checks .problem-intro h2 {
+  font-size: clamp(3.6rem, 6.4vw, 5.6rem);
+}
+
+/* Desktop settings stay available; mobile condenses them to one native disclosure. */
+.display-settings { justify-self: end; }
+.display-settings > summary { display: none; }
+.display-settings > .settings { display: flex; }
+
+@media (max-width: 900px) {
+  #checks.problem,
+  html.large #checks.problem {
+    grid-template-columns: 1fr;
+    row-gap: 1.75rem;
+  }
+  #checks .section-note,
+  #checks .problem-intro,
+  #checks .problem-editorial,
+  #checks .problem-principles,
+  #checks .checks-actions { grid-column: 1; grid-row: auto; }
+  #checks .section-note { max-width: 24rem; }
+  #checks .problem-editorial { grid-template-columns: minmax(13rem, .45fr) minmax(0, 1fr); }
+  #checks .checks-signature { left: 3%; top: 31%; }
+}
+
+@media (max-width: 620px) {
+  #checks.problem { padding-block: 3.5rem; row-gap: 1.45rem; }
+  #checks .problem-wordmark { display: none; }
+  #checks .checks-signature { left: 8%; right: -20%; top: 34%; opacity: .42; }
+  #checks .problem-intro h2 { max-width: 7.7em; font-size: clamp(2.75rem, 13vw, 4rem); line-height: 1.02; }
+  #checks .problem-editorial { grid-template-columns: 1fr; gap: 1.25rem; margin-top: -.25rem; }
+  #checks .problem-lead { margin-top: 0; }
+  #checks .problem-questions { margin-left: clamp(.4rem, 7vw, 2rem); }
+  #checks .problem-questions p { font-size: clamp(1.65rem, 8.3vw, 2.55rem); }
+  #checks .problem-questions p:nth-child(2) { transform: none; }
+  #checks .problem-principles { grid-template-columns: 1fr; gap: 1.25rem; }
+  #checks .checks-actions { align-items: stretch; flex-direction: column; gap: 1rem; }
+  #checks .checks-cta { justify-content: space-between; width: 100%; }
+  html.large #checks .problem-intro h2 {
+    max-width: 7.8em;
+    font-size: clamp(2.6rem, 12vw, 3.15rem);
+    line-height: 1.08;
+  }
+  html.large #checks .checks-title-accent { font-style: normal; }
+  .display-settings { width: 100%; justify-self: stretch; }
+  .display-settings > summary {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 0;
+    color: #f7f4f5;
+    font-weight: 650;
+    cursor: pointer;
+    list-style: none;
+  }
+  .display-settings > summary::-webkit-details-marker { display: none; }
+  .display-settings > summary::after { content: "+"; color: #e05b7d; font-size: 1.4rem; font-weight: 400; }
+  .display-settings[open] > summary::after { content: "−"; }
+  .display-settings:not([open]) > .settings { display: none; }
+  .display-settings[open] > .settings { display: flex; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #checks .checks-signal-line { stroke-dasharray: 1500; stroke-dashoffset: 1500; }
+  #checks .checks-signature.is-visible .checks-signal-line { animation: checks-draw 1.6s var(--ease-out) forwards; }
+  #checks .checks-signature.is-visible .checks-signal-accent { animation: checks-pulse 900ms var(--ease-out) 1.1s both; }
+  @keyframes checks-draw { to { stroke-dashoffset: 0; } }
+  @keyframes checks-pulse { from { opacity: 0; } to { opacity: 1; } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #checks .checks-signal-line { stroke-dasharray: none; stroke-dashoffset: 0; }
+  #checks .checks-cta,
+  #checks .checks-cta i { transition: none; }
+}

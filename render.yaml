@@ -1,0 +1,42 @@
+# Free compute + external durable quota store. Confirm the actual $0 plan,
+# public URL and secret variables before creating; never attach a paid disk.
+services:
+  - type: web
+    name: hear-your-look
+    runtime: python
+    plan: free
+    region: singapore
+    numInstances: 1
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --config gunicorn.conf.py 'hosted:create_app()'
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    envVars:
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: google/gemini-2.5-flash
+      - key: HYL_ACCESS_USER
+        value: team
+      - key: HYL_ACCESS_PASSWORD
+        sync: false
+      - key: HYL_SESSION_SECRET
+        generateValue: true
+      - key: HYL_QUOTA_BACKEND
+        value: upstash
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: HYL_AI_ENABLED
+        value: '0'
+      - key: HYL_PUBLIC_ACCESS
+        value: '0'
+      - key: HYL_DAILY_MODEL_CALLS
+        value: '20'
+      - key: HYL_ACCOUNT_PER_MINUTE
+        value: '3'
+      - key: HYL_GLOBAL_PER_MINUTE
+        value: '3'
