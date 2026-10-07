@@ -159,6 +159,53 @@ class HostedTests(unittest.TestCase):
                                     content_type='application/json', headers={'Authorization':AUTH,'Origin':ORIGIN,'X-Local-Token':token})
         self.assertEqual(response.status_code, 413)
 
+    def public_client(self, **changes):
+        app = hosted.create_app({**self.settings, 'PUBLIC_ACCESS':True,
+                                 'ACCESS_PASSWORD':'', 'DAILY_CALLS':20, **changes})
+        return app, app.test_client()
+
+    def public_post(self, client, **changes):
+        token = client.get('/api/config', base_url=ORIGIN).json['token']
+        return client.post('/api/analyze', base_url=ORIGIN, json=request_data(**changes),
+                           headers={'Origin':ORIGIN, 'X-Local-Token':token})
+
+    def test_public_pages_and_config_need_no_password(self):
+        app, client = self.public_client()
+        for path in ['/', '/app.js', '/api/config']:
+            with client.get(path, base_url=ORIGIN) as response:
+                self.assertEqual(response.status_code, 200)
+                self.assertNotIn('WWW-Authenticate', response.headers)
+        self.assertEqual(client.get('/hosted.py', base_url=ORIGIN).status_code, 404)
+
+    def test_public_api_still_requires_origin_csrf_and_consent(self):
+        app, client = self.public_client()
+        with patch('server.analyze') as call:
+            self.assertEqual(client.post('/api/analyze', base_url=ORIGIN,
+                                         json=request_data()).status_code, 403)
+            self.assertEqual(self.public_post(client, consent=False).status_code, 400)
+            call.assert_not_called()
+        with patch('server.analyze', return_value={'mode':'ai', 'status':'uncertain'}) as call:
+            self.assertEqual(self.public_post(client).status_code, 200)
+            call.assert_called_once()
+
+    def test_public_budget_is_shared_between_browsers(self):
+        app, client = self.public_client(DAILY_CALLS=2)
+        with patch('server.analyze', return_value={'mode':'ai', 'status':'uncertain'}):
+            self.assertEqual(self.public_post(client).status_code, 200)
+        with patch('server.analyze') as call:
+            self.assertEqual(self.public_post(app.test_client()).status_code, 429)
+            call.assert_not_called()
+
+    def test_public_pages_work_but_api_stops_during_quota_outage(self):
+        app, client = self.public_client()
+        with patch.object(app.extensions['hyl_quota'], 'auth_attempt',
+                          side_effect=server.Problem(503, '额度保护不可用')):
+            with client.get('/', base_url=ORIGIN) as response:
+                self.assertEqual(response.status_code, 200)
+            with patch('server.analyze') as call:
+                self.assertEqual(client.get('/api/config', base_url=ORIGIN).status_code, 503)
+                call.assert_not_called()
+
     def test_unknown_exception_not_exposed(self):
         with patch('server.analyze', side_effect=RuntimeError('fake-test-key')):
             response = self.post()
