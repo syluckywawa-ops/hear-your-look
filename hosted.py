@@ -1,4 +1,8 @@
-"""Protected, single-instance HTTPS deployment. Never load .env.local here."""
+"""Single-instance HTTPS deployment with optional anonymous access.
+
+Public access never removes consent, CSRF, durable quotas or the AI kill switch.
+Never load .env.local here.
+"""
 import hmac
 import hashlib
 import os
@@ -66,6 +70,7 @@ def create_app(overrides=None):
         PUBLIC_ORIGIN=os.environ.get('PUBLIC_ORIGIN', ''),
         ACCESS_USER=os.environ.get('HYL_ACCESS_USER', 'team'),
         ACCESS_PASSWORD=os.environ.get('HYL_ACCESS_PASSWORD', ''),
+        PUBLIC_ACCESS=os.environ.get('HYL_PUBLIC_ACCESS', '0') == '1',
         QUOTA_DB=os.environ.get('HYL_QUOTA_DB', ''),
         QUOTA_BACKEND=os.environ.get('HYL_QUOTA_BACKEND', 'sqlite'),
         REDIS_URL=os.environ.get('UPSTASH_REDIS_REST_URL', ''),
@@ -87,7 +92,8 @@ def create_app(overrides=None):
     if (origin.scheme != 'https' or not origin.hostname or origin.username or origin.password
             or origin.path or origin.query or origin.fragment):
         raise ValueError('PUBLIC_ORIGIN must be the exact HTTPS origin without trailing slash.')
-    if len(c['SECRET_KEY']) < 32 or len(c['ACCESS_PASSWORD']) < 24 or not c['ACCESS_USER']:
+    if len(c['SECRET_KEY']) < 32 or (not c['PUBLIC_ACCESS'] and
+            (len(c['ACCESS_PASSWORD']) < 24 or not c['ACCESS_USER'])):
         raise ValueError('Set strong session secret (32+ chars) and access password (24+ chars).')
     if min(c['DAILY_CALLS'], c['ACCOUNT_RATE'], c['GLOBAL_RATE']) < 1:
         raise ValueError('All quotas must be positive.')
@@ -114,9 +120,12 @@ def create_app(overrides=None):
         if request.path == '/healthz': return None  # Non-sensitive platform probe.
         if request.host.lower() != origin.netloc.lower() or not request.is_secure:
             return fail(403, '请使用正式 HTTPS 网站地址访问。')
-        quota.auth_attempt()
+        # Public pages remain readable during a quota-store outage. API requests
+        # still use the durable global request cap; never fail open for AI.
+        if not c['PUBLIC_ACCESS'] or request.path.startswith('/api/'):
+            quota.auth_attempt()
         auth = request.authorization
-        if (not auth or auth.type.lower() != 'basic'
+        if not c['PUBLIC_ACCESS'] and (not auth or auth.type.lower() != 'basic'
                 or not hmac.compare_digest((auth.username or '').encode(), c['ACCESS_USER'].encode())
                 or not hmac.compare_digest((auth.password or '').encode(), c['ACCESS_PASSWORD'].encode())):
             response = jsonify(error='请输入团队访问账号与密码。')
@@ -174,7 +183,10 @@ def create_app(overrides=None):
         server.validate_input(data)
         if not gate.acquire(blocking=False): raise server.Problem(429, '另一张照片仍在处理，请稍后重试。')
         try:
-            account = hmac.new(c['SECRET_KEY'].encode(), c['ACCESS_USER'].encode(), hashlib.sha256).hexdigest()
+            # All anonymous visitors share one quota bucket. No IP tracking or
+            # trusting forwarded IP headers; new browsers cannot bypass limits.
+            account = ('public' if c['PUBLIC_ACCESS'] else
+                       hmac.new(c['SECRET_KEY'].encode(), c['ACCESS_USER'].encode(), hashlib.sha256).hexdigest())
             quota.reserve(account, c['DAILY_CALLS'], c['ACCOUNT_RATE'], c['GLOBAL_RATE'])
             return jsonify(server.analyze(data))
         finally: gate.release()

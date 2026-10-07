@@ -32,9 +32,11 @@ services:
         sync: false
       - key: HYL_AI_ENABLED
         value: '0'
+      - key: HYL_PUBLIC_ACCESS
+        value: '0'
       - key: HYL_DAILY_MODEL_CALLS
-        value: '120'
+        value: '20'
       - key: HYL_ACCOUNT_PER_MINUTE
         value: '3'
       - key: HYL_GLOBAL_PER_MINUTE
-        value: '12'
+        value: '3'
