@@ -1,20 +1,16 @@
-# Creates billable resources only when approved in Render. Do not deploy until
-# the owner confirms the plan, disk charges, public URL and secret variables.
+# Free compute + external durable quota store. Confirm the actual $0 plan,
+# public URL and secret variables before creating; never attach a paid disk.
 services:
   - type: web
     name: hear-your-look
     runtime: python
-    plan: starter
+    plan: free
     region: singapore
     numInstances: 1
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --config gunicorn.conf.py 'hosted:create_app()'
     healthCheckPath: /healthz
     autoDeployTrigger: off
-    disk:
-      name: quota-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: PUBLIC_ORIGIN
         sync: false
@@ -28,10 +24,12 @@ services:
         sync: false
       - key: HYL_SESSION_SECRET
         generateValue: true
-      - key: HYL_QUOTA_DB
-        value: /var/data/hyl-quota.sqlite3
-      - key: HYL_PERSISTENT_STORAGE
-        value: '1'
+      - key: HYL_QUOTA_BACKEND
+        value: upstash
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
       - key: HYL_AI_ENABLED
         value: '0'
       - key: HYL_DAILY_MODEL_CALLS

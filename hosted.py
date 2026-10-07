@@ -13,6 +13,7 @@ from flask import Flask, jsonify, request, send_file, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.exceptions import HTTPException
 import server
+from redis_quota import RedisQuota
 
 
 class Quota:
@@ -66,6 +67,10 @@ def create_app(overrides=None):
         ACCESS_USER=os.environ.get('HYL_ACCESS_USER', 'team'),
         ACCESS_PASSWORD=os.environ.get('HYL_ACCESS_PASSWORD', ''),
         QUOTA_DB=os.environ.get('HYL_QUOTA_DB', ''),
+        QUOTA_BACKEND=os.environ.get('HYL_QUOTA_BACKEND', 'sqlite'),
+        REDIS_URL=os.environ.get('UPSTASH_REDIS_REST_URL', ''),
+        REDIS_TOKEN=os.environ.get('UPSTASH_REDIS_REST_TOKEN', ''),
+        QUOTA_PREFIX=os.environ.get('HYL_QUOTA_PREFIX', 'hyl:{hear-your-look}'),
         PERSISTENT_STORAGE=os.environ.get('HYL_PERSISTENT_STORAGE') == '1',
         AI_ENABLED=os.environ.get('HYL_AI_ENABLED', '0') == '1',
         DAILY_CALLS=int(os.environ.get('HYL_DAILY_MODEL_CALLS', '120')),
@@ -84,12 +89,17 @@ def create_app(overrides=None):
         raise ValueError('PUBLIC_ORIGIN must be the exact HTTPS origin without trailing slash.')
     if len(c['SECRET_KEY']) < 32 or len(c['ACCESS_PASSWORD']) < 24 or not c['ACCESS_USER']:
         raise ValueError('Set strong session secret (32+ chars) and access password (24+ chars).')
-    db_path = Path(c['QUOTA_DB'])
-    if not db_path.is_absolute() or not c['PERSISTENT_STORAGE'] or db_path.is_relative_to(server.WEB):
-        raise ValueError('A confirmed persistent absolute QUOTA_DB path outside web assets is required.')
     if min(c['DAILY_CALLS'], c['ACCOUNT_RATE'], c['GLOBAL_RATE']) < 1:
         raise ValueError('All quotas must be positive.')
-    quota = Quota(db_path)
+    if c['QUOTA_BACKEND'] == 'upstash':
+        quota = RedisQuota(c['REDIS_URL'], c['REDIS_TOKEN'], c['QUOTA_PREFIX'])
+    elif c['QUOTA_BACKEND'] == 'sqlite':
+        db_path = Path(c['QUOTA_DB'])
+        if not db_path.is_absolute() or not c['PERSISTENT_STORAGE'] or db_path.is_relative_to(server.WEB):
+            raise ValueError('A confirmed persistent absolute QUOTA_DB path outside web assets is required.')
+        quota = Quota(db_path)
+    else:
+        raise ValueError('QUOTA_BACKEND must be sqlite or upstash; no volatile fallback is allowed.')
     app.extensions['hyl_quota'] = quota
     gate = threading.BoundedSemaphore(1)
     # Render terminates HTTPS at one trusted proxy. Do not trust forwarded Host
