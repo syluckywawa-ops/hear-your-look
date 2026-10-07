@@ -6,10 +6,10 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / 'hear-your-look-website'
-TOP = ['server.py', 'start.py', '启动听见妆容.command', 'hosted.py', 'gunicorn.conf.py',
-       'requirements.txt', 'render.yaml', 'DEPLOYMENT.md', '.gitignore',
+TOP = ['server.py', 'start.py', '启动听见妆容.command', 'hosted.py', 'redis_quota.py', 'gunicorn.conf.py',
+       'requirements.txt', 'requirements-test.txt', 'render.yaml', 'DEPLOYMENT.md', '.gitignore',
        'tests/test_server.py', 'tests/test_analysis.cjs', 'tests/test_hosted.py',
-       'tests/smoke_hosted.py', 'scripts/package_deployment.py']
+       'tests/smoke_hosted.py', 'tests/test_redis_quota.py', 'scripts/package_deployment.py']
 WEB_FILES = ['index.html', 'style.css', 'polish.css', 'checks.css', 'integration.css', 'app.js', 'analysis.js', 'polish.js']
 
 
