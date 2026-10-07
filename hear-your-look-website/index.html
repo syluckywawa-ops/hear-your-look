@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="polish.css">
   <link rel="stylesheet" href="checks.css">
+  <link rel="stylesheet" href="integration.css">
   <script src="analysis.js" defer></script>
   <script src="app.js" defer></script>
   <script src="polish.js" defer></script>
@@ -145,15 +146,36 @@
       <div class="studio-intro" data-reveal>
         <div>
           <h2 id="studio-title">口红检查工作台</h2>
-          <p>真实操作区保留必要的界面边界。请从准备照片开始，完成一次预设演示闭环。</p>
+          <p>从准备照片开始，听取一个动作，再次检查。可选择预设演示或实验性模型检查。</p>
         </div>
-        <div class="studio-meta"><span>本机处理</span><span>预设判断</span><span>可随时暂停</span></div>
+        <div class="studio-meta"><span>本机亮度提示</span><span>来源明确</span><span>可随时暂停</span></div>
       </div>
 
       <div class="notice" role="note">
-        <strong>演示原型，未接入真实 AI</strong>
-        <span>可准备真实照片，但口红结果来自预设场景，不代表系统看懂了照片。照片不上传。</span>
+        <strong>参赛原型 · 模型能力未经验证</strong>
+        <span>演示模式不发送照片；真实模式经同意后发送给 OpenRouter 及模型提供商。两种模式的结果来源始终标注。</span>
       </div>
+
+      <fieldset class="analysis-settings">
+        <legend>检查方式</legend>
+        <label for="analysis-mode">选择模式</label>
+        <select id="analysis-mode" aria-describedby="analysis-help">
+          <option value="demo">预设演示 · 不发送照片</option>
+          <option value="ai">真实检查 · 实验性模型</option>
+        </select>
+        <p id="analysis-help">默认演示模式。真实模式需要可用的项目服务端和模型配置；模型判断可能出错。</p>
+        <div id="ai-settings" hidden>
+          <p id="privacy-help">本次照片会缩小至最长边 1600px、重新编码后，经项目服务端发送给 OpenRouter 和模型提供商。项目服务端不落盘保存照片；外部服务处理与留存受其政策约束。本原型不保证识别正确，不用于医疗判断。</p>
+          <label for="photo-orientation">照片方向</label>
+          <select id="photo-orientation" aria-describedby="orientation-help">
+            <option value="unknown">不确定，请先确认</option>
+            <option value="normal">原始方向（非镜像）</option>
+            <option value="mirrored">已左右翻转（镜像）</option>
+          </select>
+          <p id="orientation-help">网页摄像头拍摄自动标为原始方向。已有自拍可能镜像，不确定时请用网页摄像头重新拍摄；模型无法可靠推断镜像。</p>
+          <label class="send-consent" for="send-consent"><input id="send-consent" type="checkbox" aria-describedby="privacy-help"><span>我有权使用这张照片，并同意发送本次照片用于模型检查。</span></label>
+        </div>
+      </fieldset>
 
       <div class="studio-toolbar">
         <div class="active-task"><span class="task-chip">当前任务</span><strong>口红唇线检查</strong></div>
@@ -207,7 +229,7 @@
             <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="upload-help">
             <button id="capture" disabled>3 秒后拍摄</button>
             <button id="remove-photo" hidden>移除照片</button>
-            <p id="upload-help">支持 JPG、PNG、WebP，最大 10 MB。照片只在当前浏览器处理，不上传。</p>
+            <p id="upload-help">支持 JPG、PNG、WebP，最大 10 MB。选择照片不会自动发送；真实检查需单独同意。</p>
             <p id="photo-status" role="status">尚未选择照片。</p>
             <div id="photo-quality" hidden role="status">
               <strong id="quality-message"></strong>
@@ -219,7 +241,7 @@
         <section class="coach card" aria-labelledby="coach-title">
           <div class="panel-head">
             <h2 id="coach-title">语音陪伴</h2>
-            <span class="demo-badge">预设场景</span>
+            <span class="demo-badge" id="analysis-badge">预设场景</span>
           </div>
           <div class="instruction">
             <div class="voice-symbol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -229,6 +251,7 @@
               <p id="instruction-body">按下开始体验，听取取景提示。演示会模拟检查结果，带你走完一次修正流程。</p>
             </div>
             <p id="source-note" class="source-note">结果来源：预设演示。尚未分析照片。</p>
+            <p id="analysis-error" role="alert" hidden></p>
             <details id="result-disclosure" hidden>
               <summary>查看检查详情与判断边界</summary>
               <dl id="result-details"></dl>
@@ -286,7 +309,7 @@
         <div class="session-controls">
           <button id="export-session">导出体验记录</button>
           <button id="clear-session">清除记录与照片</button>
-          <p>只导出本次用时、重听与流程事件，不含照片。该记录不是用户研究结果或 AI 准确率证明。</p>
+          <p>由你主动导出用时、流程事件；真实模式还包含模型、照片完整性原因和结果文案，不含照片或密钥。记录仅在当前页面保留，清除或重新开始会删除；请先导出。不是用户研究结果或 AI 准确率证明。</p>
           <section id="session-export" hidden aria-labelledby="export-title">
             <h3 id="export-title">本次体验记录</h3>
             <label for="session-json">可复制的 JSON 记录</label>
@@ -311,9 +334,9 @@
         <figcaption><strong>判断边界</strong><span>看得见结果来源，也看得见何时该停下。</span></figcaption>
       </figure>
       <div class="boundary-list" data-reveal>
-        <article><h3>照片留在本机</h3><p>当前原型不上传照片，结束体验时会释放摄像头和照片。</p></article>
-        <article><h3>结果来源始终可见</h3><p>页面明确区分本机亮度提示与预设妆容结果。</p></article>
-        <article><h3>不把不确定说成成功</h3><p>光线、画面或未来模型无法判断时，应先要求重新准备照片。</p></article>
+        <article><h3>照片发送由你决定</h3><p>演示不发送照片；真实检查需逐张同意，经项目服务端发送至外部模型服务。项目服务端不落盘保存照片，结束时释放摄像头和浏览器照片。</p></article>
+        <article><h3>结果来源始终可见</h3><p>明确区分本机亮度提示、预设结果和未经验证的模型观察。外部服务的数据政策仍需了解。</p></article>
+        <article><h3>不把不确定说成成功</h3><p>画面、唇线或位置无法确定时先重拍。复查仅观察新照片，不宣称已验证改善。</p></article>
       </div>
     </section>
 

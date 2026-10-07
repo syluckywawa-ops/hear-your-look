@@ -1,9 +1,48 @@
 'use strict';
-/** Analysis boundary. No network requests or credentials in this adapter.
+/** Analysis boundary. AI sends re-encoded images only to our same-origin server.
+ * Credentials never enter the browser. Demo never sends images.
  * image: Blob|null; options: {scenario, recheck, recheckOutcome, previousResult}.
- * A future server adapter must validate responses and label mode:'ai'. Never
+ * The server adapter validates responses and labels mode:'ai'. Never
  * fall back to this demo without an explicit user choice. */
 async function analyzeMakeup(image, options = {}) {
+  if (options.mode === 'ai') {
+    if (!(image instanceof Blob) || !options.consent) throw new Error('真实检查需要照片和本次发送同意。');
+    if (!['normal', 'mirrored'].includes(options.orientation)) throw new Error('请先确认照片是否镜像。');
+    let config;
+    try {
+      const response = await fetch('/api/config', { signal: options.signal });
+      if (!response.ok) throw new Error();
+      config = await response.json();
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      throw new Error('检查服务暂时无法访问，请刷新或联系团队。本地使用时需要项目服务端，不能只双击网页文件。');
+    }
+    if (!config.ready) throw new Error(typeof config.message === 'string' && config.message.length <= 300 ? config.message : '服务端尚未配置模型，请联系团队；本地运行请检查密钥配置并重启。');
+    const bitmap = await createImageBitmap(image);
+    let encoded;
+    try {
+      const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      encoded = canvas.toDataURL('image/jpeg', .9);
+    } finally { bitmap.close(); }
+    try {
+      const response = await fetch('/api/analyze', { method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Local-Token': config.token },
+        body: JSON.stringify({ image: encoded, consent: true, orientation: options.orientation, recheck: !!options.recheck }), signal: options.signal });
+      const value = await response.json();
+      if (!response.ok) throw new Error(value.error || '模型请求失败，请重试。');
+      if (value.mode !== 'ai' || typeof value.model !== 'string' || value.model.length > 200) throw new Error('真实检查返回的来源无效，请重试。没有使用演示结果。');
+      return validateMakeupResult(value);
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      if (error instanceof TypeError) throw new Error('连接中断，请检查网络后重试；仍失败时请联系团队。');
+      throw error;
+    }
+  }
   if (image !== null && !(image instanceof Blob)) throw new Error('Invalid image');
   await new Promise(resolve => setTimeout(resolve, 900));
   const status = options.recheck
@@ -24,9 +63,24 @@ async function analyzeMakeup(image, options = {}) {
   };
 }
 function validateMakeupResult(value) {
-  if (!value || value.mode !== 'demo' || !['adjust', 'clear', 'unchanged', 'uncertain'].includes(value.status)
+  if (!value || !['demo', 'ai'].includes(value.mode) || !['adjust', 'clear', 'unchanged', 'uncertain'].includes(value.status)
     || !['title', 'guidance', 'quality', 'smudging', 'evidence'].every(key => typeof value[key] === 'string' && value[key].length <= 1200)) {
     throw new Error('分析响应无效，请重试。');
+  }
+  if (value.mode === 'ai') {
+    const reasons = ['ok', 'occluded', 'blur', 'dark', 'incomplete', 'ambiguous'];
+    const quality = value.quality_check;
+    if (!reasons.includes(value.reason) || !['normal', 'mirrored'].includes(value.orientation)
+      || !['left', 'right', 'center', 'unknown'].includes(value.image_side)
+      || !['corner', 'upper', 'lower', 'unknown'].includes(value.region)
+      || !quality || !reasons.includes(quality.reason)
+      || !['left_corner_visible', 'right_corner_visible', 'upper_border_visible', 'lower_border_visible', 'sharp_enough', 'lit_enough', 'occluded'].every(key => typeof quality[key] === 'boolean')) {
+      throw new Error('照片完整性结果无效，请重新检查；没有使用演示结果。');
+    }
+    if (value.status === 'unchanged' || value.status !== 'uncertain' && (value.reason !== 'ok' || quality.reason !== 'ok' || quality.occluded
+      || !['left_corner_visible', 'right_corner_visible', 'upper_border_visible', 'lower_border_visible', 'sharp_enough', 'lit_enough'].every(key => quality[key]))) {
+      throw new Error('照片完整性与判断结论冲突，请重新检查。');
+    }
   }
   return value;
 }

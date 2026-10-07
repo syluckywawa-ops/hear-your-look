@@ -1,0 +1,12 @@
+/* Model controls preserve the existing mirror-workspace design. */
+.analysis-settings { margin: 1.5rem 0; padding: 1.25rem 0; border: 0; min-width: 0; color: #f4f1f2; }
+.analysis-settings legend { font-size: 1.2rem; font-weight: 600; }
+.analysis-settings p { max-width: 70ch; color: #ded7da; line-height: 1.7; margin: .75rem 0; }
+.analysis-settings select { max-width: 100%; min-height: 48px; padding: .65rem; background: #211d20; color: #fff; border: 1px solid #978b91; font: inherit; }
+.analysis-settings label:not(.send-consent) { display: block; margin-bottom: .5rem; }
+.send-consent { display: flex; align-items: flex-start; gap: .75rem; padding: .75rem 0; min-height: 48px; max-width: 70ch; line-height: 1.6; cursor: pointer; }
+.send-consent input { flex: 0 0 auto; width: 24px; height: 24px; margin-top: .2rem; accent-color: #bf3b61; }
+#analysis-error { color: #ffd2dd; line-height: 1.6; }
+.analysis-settings :focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.high-contrast .analysis-settings, .high-contrast .analysis-settings p, .high-contrast #analysis-error { color: #fff; }
+[hidden] { display: none !important; }
