@@ -3,7 +3,7 @@ const $ = selector => document.querySelector(selector);
 let phase = 0, scenario = 'overflow', paused = false, stream = null;
 let selectedImage = null, photoURL = null, busy = false, result = null;
 let runVersion = 0, photoVersion = 0, cameraVersion = 0, speechVersion = 0;
-let cameraPending = false, capturing = false, countdownTimer = null;
+let cameraPending = false, capturing = false, countdownTimer = null, photoPending = false;
 let withoutPhoto = false, previousResult = null;
 let startedAt = null, repeats = 0, exportURL = null;
 let mode = 'demo', requestController = null, analysisError = '';
@@ -53,7 +53,7 @@ function render(announce = false, focus = false) {
   $('#instruction-title').textContent = busy ? (mode === 'ai' ? '模型正在检查照片…' : '正在运行预设流程…') : paused ? '体验已暂停。' : c[1];
   $('#instruction-body').textContent = busy ? (mode === 'ai' ? '照片已开始发送。可结束等待；已发送的照片无法撤回。结果可能出错。' : '这里模拟等待时间，没有识别照片中的妆容。') : paused ? '继续时回到当前步骤。摄像头已关闭，照片仍可保留供你继续准备。' : c[2];
   $('#next').textContent = busy ? '处理中…' : c[3];
-  $('#next').disabled = busy || paused || capturing || (preparing && (!selectedImage && !withoutPhoto || mode === 'ai' && (!selectedImage || !$('#send-consent').checked || $('#photo-orientation').value === 'unknown')));
+  $('#next').disabled = busy || paused || capturing || photoPending || (preparing && (!selectedImage && !withoutPhoto || mode === 'ai' && (!selectedImage || !$('#send-consent').checked || $('#photo-orientation').value === 'unknown')));
   $('#repeat').disabled = busy;
   $('#pause').disabled = busy || phase === 6;
   $('#pause').textContent = paused ? '继续体验' : '暂停体验';
@@ -64,8 +64,8 @@ function render(announce = false, focus = false) {
   $('#analysis-badge').textContent = mode === 'ai' ? '真实模型 · 实验性' : '预设场景';
   $('#ai-settings').hidden = mode !== 'ai';
   $('#analysis-mode').disabled = ![0, 6].includes(phase) || busy || capturing;
-  $('#photo-orientation').disabled = busy || !canPrepare;
-  $('#send-consent').disabled = busy || !canPrepare || !selectedImage;
+  $('#photo-orientation').disabled = busy || photoPending || !selectedImage || !canPrepare;
+  $('#send-consent').disabled = busy || photoPending || !canPrepare || !selectedImage;
   $('#live').setAttribute('aria-busy', String(busy));
   $('#no-photo').hidden = mode === 'ai' || !preparing || withoutPhoto || !!selectedImage || busy || paused;
   $('#retake').hidden = ![2, 3, 5].includes(phase) || busy || paused || ([2, 5].includes(phase) && result?.status !== 'adjust' && result?.status !== 'clear');
@@ -158,6 +158,7 @@ function reset(announce = false) {
   render(announce, true);
 }
 function removePhoto() {
+  photoPending = false;
   $('#send-consent').checked = false; $('#photo-orientation').value = 'unknown'; analysisError = '';
   photoVersion++;
   if (photoURL) URL.revokeObjectURL(photoURL);
@@ -169,6 +170,10 @@ function removePhoto() {
 }
 async function setPhoto(blob, orientation = 'unknown') {
   const version = ++photoVersion, url = URL.createObjectURL(blob), image = new Image();
+  photoPending = true;
+  $('#send-consent').checked = false; $('#photo-orientation').value = 'unknown';
+  $('#photo-status').textContent = '正在准备照片，完成后请确认方向与发送同意。';
+  render();
   try {
     await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error('请使用有效的 JPG、PNG 或 WebP 照片。')); image.src = url; });
     if (image.naturalWidth * image.naturalHeight > 40000000) throw new Error('照片分辨率过大，请缩小后再试。');
@@ -185,6 +190,7 @@ async function setPhoto(blob, orientation = 'unknown') {
     $('#quality-message').textContent = quality.message; $('#quality-note').textContent = quality.note;
     record('photo_prepared'); render();
   } catch (error) { URL.revokeObjectURL(url); if (version === photoVersion) throw error; }
+  finally { if (version === photoVersion) { photoPending = false; render(); } }
 }
 function cancelCountdown() {
   if (countdownTimer !== null) clearTimeout(countdownTimer);
