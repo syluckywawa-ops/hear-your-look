@@ -88,6 +88,17 @@ class AnalysisTests(unittest.TestCase):
             self.assertEqual(call.call_count, 1, 'Gate failure must not invoke lipstick analysis')
             self.assertNotIn('棉签', result['guidance'])
 
+    def test_visible_overflow_reaches_lipstick_analysis(self):
+        # Contract regression only: mocked responses do not establish model accuracy.
+        with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}), patch('urllib.request.urlopen', side_effect=[reply(quality()), reply(observation())]) as call:
+            result = server.analyze(request_data())
+        self.assertEqual(call.call_count, 2)
+        self.assertEqual(result['status'], 'adjust')
+        self.assertIn('你自己的右侧', result['guidance'])
+        self.assertEqual(result['quality_check'], quality())
+        payload = json.loads(call.call_args_list[0].args[0].data)
+        self.assertIn('NOT cropping', payload['messages'][0]['content'])
+
     def test_invalid_quality_fails_closed(self):
         for value in [{}, quality(occluded='false'), quality(reason='success'), quality(right_corner_visible=1)]:
             with self.assertRaises(server.Problem): server.validate_quality(value)
